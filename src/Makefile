@@ -6,6 +6,8 @@ CFLAGS+= -I.
 LFLAGS+=
 
 # VTK library
+# Disable these line if you don't want to build with vtk
+CFLAGS+=-DENABLE_VTK
 CFLAGS+=-I$(wildcard /usr/include/vtk-5.*)
 LFLAGS+=-L$(wildcard /usr/lib/vtk-5.*) -lvtkIO -lvtkCommon -lvtkFiltering
 

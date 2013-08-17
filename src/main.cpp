@@ -5,6 +5,7 @@
 
 #include "readers.h"
 #include "string_tools.h"
+#include "vtk_output.h"
 #include "makelevelset3.h"
 #include <fstream>
 #include <iostream>
@@ -58,7 +59,8 @@ int main(int argc, char** argv) {
     }
     auto extension = filename.substr(dot+1);
     auto basename  = filename.substr(0, dot);
-    auto outname   = basename + std::string(".sdf");
+    //auto outname   = basename + std::string(".sdf");
+    auto outname   = basename + std::string(".vtr");
     
     cout << "File name is   " << filename << "\n";
     cout << "Extension is   " << extension << "\n";
@@ -94,6 +96,9 @@ int main(int argc, char** argv) {
 
     // Very hackily strip off file suffix.
     cout << "Writing results to: " << outname << "\n";
+
+    write_as_vtk(outname, phi_grid, mesh.min_box, mesh.max_box);
+    /*
     std::ofstream outfile(outname);
     outfile << phi_grid.ni << " " << phi_grid.nj << " " << phi_grid.nk << "\n";
     outfile << mesh.min_box[0] << " " 
@@ -101,6 +106,7 @@ int main(int argc, char** argv) {
         << mesh.min_box[2] << "\n";
     outfile << dx << "\n";
     for (auto a: phi_grid.a) outfile << a << "\n";
+    */
     cout << "Processing complete.\n";
 }
 
