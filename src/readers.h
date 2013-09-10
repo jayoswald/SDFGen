@@ -14,6 +14,8 @@ struct Triangulation {
 
 // Reads input mesh data from a STL file (ascii format).
 Triangulation read_ascii_stl(std::string filename);
+// Reads input mesh data from a STL file (binary format).
+Triangulation read_binary_stl(std::string filename);
 // Reads input mesh data from a Wavefront OBJ (text) file.
 Triangulation read_obj_file(std::string filename);
 

@@ -1,5 +1,6 @@
 #include "readers.h"
 #include "string_tools.h"
+#include <string.h>
 
 using std::cout;
 
@@ -64,6 +65,56 @@ Triangulation read_ascii_stl(std::string filename) {
     }
     cout << "Read in " << mesh.vertList.size() << " vertices and " 
          << mesh.faceList.size() << " faces.\n";
+    return mesh;
+}
+
+// Reads input mesh data from a STL file (binary format).
+Triangulation read_binary_stl(std::string filename) {
+    Triangulation mesh;
+    std::fstream fid(filename, std::ios::in|std::ios::binary);
+    // Skip binary header.
+    char header[81] = {0};
+    unsigned int num_faces = 0;
+    fid.read(header, 80);
+    fid.read((char*)&num_faces, 4);
+
+    for (int f=0; f<num_faces; ++f) {
+        char buffer[sizeof(float)*12] = {0};
+        fid.read((char*)buffer, sizeof(float)*12);        
+        // Convert and save coordinates for each vertex.
+        int p0 = 0;
+        for (int i=0; i<3; ++i) {
+            // p0 is the position accessing the data buffer. 
+            p0 += sizeof(float)*3;
+            char vx[sizeof(float)], vy[sizeof(float)], vz[sizeof(float)];
+            strncpy(vx, buffer+p0,                 sizeof(float));
+            strncpy(vy, buffer+  sizeof(float)+p0, sizeof(float));
+            strncpy(vz, buffer+2*sizeof(float)+p0, sizeof(float));
+
+            Vec3f vcoord = {*reinterpret_cast<float*>(vx), 
+                            *reinterpret_cast<float*>(vy), 
+                            *reinterpret_cast<float*>(vz)};
+
+            mesh.vertList.push_back(vcoord);
+        }       
+
+        // Form face connectivity. 
+        auto v_ct = mesh.vertList.size();
+        mesh.faceList.emplace_back(v_ct-2, v_ct-1, v_ct);
+        // Ignore the attribute for now. 
+        char attr_buffer[2];
+        fid.read((char*)attr_buffer, 2);
+    }
+    // Update domain boundary.
+    if (mesh.vertList.size()) {
+        mesh.max_box = mesh.min_box =  mesh.vertList[0];
+    }
+    for (auto &v: mesh.vertList) {
+        //update_minmax(v, mesh.min_box, mesh.max_box);
+    }
+    cout << "Read in " << mesh.vertList.size() << " vertices and " 
+         << mesh.faceList.size() << " faces.\n";
+
     return mesh;
 }
 

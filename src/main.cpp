@@ -69,7 +69,8 @@ int main(int argc, char** argv) {
 
     Triangulation mesh;
     if (lower(extension) == "stl") {
-        mesh = read_ascii_stl(filename);
+        //mesh = read_ascii_stl(filename);
+        mesh = read_binary_stl(filename);
     }
     else if (lower(extension) == "obj") {
         mesh = read_obj_file(filename);
