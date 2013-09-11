@@ -4,9 +4,6 @@
 
 using std::cout;
 
-
-
-
 // Reads the next vertex line in the STL file.
 Vec3f read_stl_vertex(std::fstream &infile) {
     while (infile) {
@@ -73,44 +70,32 @@ Triangulation read_binary_stl(std::string filename) {
     Triangulation mesh;
     std::fstream fid(filename, std::ios::in|std::ios::binary);
     // Skip binary header.
-    char header[81] = {0};
-    unsigned int num_faces = 0;
-    fid.read(header, 80);
-    fid.read((char*)&num_faces, 4);
+    char buffer[80];
+    fid.read(buffer, sizeof(buffer));
+    unsigned num_faces = 0;
+    fid.read((char*)&num_faces, sizeof(unsigned));
 
     for (int f=0; f<num_faces; ++f) {
-        char buffer[sizeof(float)*12] = {0};
-        fid.read((char*)buffer, sizeof(float)*12);        
-        // Convert and save coordinates for each vertex.
-        int p0 = 0;
-        for (int i=0; i<3; ++i) {
-            // p0 is the position accessing the data buffer. 
-            p0 += sizeof(float)*3;
-            char vx[sizeof(float)], vy[sizeof(float)], vz[sizeof(float)];
-            strncpy(vx, buffer+p0,                 sizeof(float));
-            strncpy(vy, buffer+  sizeof(float)+p0, sizeof(float));
-            strncpy(vz, buffer+2*sizeof(float)+p0, sizeof(float));
-
-            Vec3f vcoord = {*reinterpret_cast<float*>(vx), 
-                            *reinterpret_cast<float*>(vy), 
-                            *reinterpret_cast<float*>(vz)};
-
-            mesh.vertList.push_back(vcoord);
-        }       
-
-        // Form face connectivity. 
+        // Number of vertices before face is added.
         auto v_ct = mesh.vertList.size();
-        mesh.faceList.emplace_back(v_ct-2, v_ct-1, v_ct);
-        // Ignore the attribute for now. 
-        char attr_buffer[2];
-        fid.read((char*)attr_buffer, 2);
+
+        float v[12];
+        fid.read((char*)v, sizeof(v));
+        // Adds three facet coordinates to vertex list.
+        // Skips first three values (normal direction).
+        for (int i=1; i<=3; ++i) {
+            mesh.vertList.push_back(Vec3f{v[3*i], v[3*i+1], v[3*i+2]});
+        }
+        mesh.faceList.emplace_back(v_ct, v_ct+1, v_ct+2);
+        // Ignore the attribute for now (the length is 2 bytes). 
+        fid.read((char*)buffer, 2);
     }
     // Update domain boundary.
     if (mesh.vertList.size()) {
         mesh.max_box = mesh.min_box =  mesh.vertList[0];
     }
     for (auto &v: mesh.vertList) {
-        //update_minmax(v, mesh.min_box, mesh.max_box);
+        update_minmax(v, mesh.min_box, mesh.max_box);
     }
     cout << "Read in " << mesh.vertList.size() << " vertices and " 
          << mesh.faceList.size() << " faces.\n";

@@ -8,4 +8,4 @@ for ARG in "$@"; do
     fi    
 done
 
-../../src/SDFgen part_3_bulk.stl 0.01 10
+../../src/SDFgen part_3_bulk.stl 0.1 10
